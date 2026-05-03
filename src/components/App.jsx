@@ -5,16 +5,18 @@ import ToyForm from "./ToyForm";
 function App() {
   const [toys, setToys] = useState([]);
 
-  // LOAD toys on page mount
+  // GET toys
   useEffect(() => {
     fetch("http://localhost:3000/toys")
       .then((r) => r.json())
       .then(setToys);
   }, []);
 
-  // LIKE toy
+  // LIKE toy (PATCH request)
   function handleLike(id) {
     const toy = toys.find((t) => t.id === id);
+
+    const updatedLikes = toy.likes + 1;
 
     fetch(`http://localhost:3000/toys/${id}`, {
       method: "PATCH",
@@ -22,38 +24,34 @@ function App() {
         "Content-Type": "application/json",
       },
       body: JSON.stringify({
-        likes: toy.likes + 1,
+        likes: updatedLikes,
       }),
     })
       .then((r) => r.json())
       .then((updatedToy) => {
+        // IMPORTANT: preserve order using map
         setToys((prev) =>
           prev.map((t) => (t.id === id ? updatedToy : t))
         );
       });
   }
 
-  // DELETE toy (DONATE)
+  // DELETE toy
   function handleDelete(id) {
     fetch(`http://localhost:3000/toys/${id}`, {
       method: "DELETE",
     }).then(() => {
-      setToys((prev) => prev.filter((toy) => toy.id !== id));
+      setToys((prev) => prev.filter((t) => t.id !== id));
     });
   }
 
-  // ADD new toy
+  // ADD toy
   function handleAddToy(newToy) {
-    const toyToSend = {
-      ...newToy,
-      likes: 0,
-    };
+    const toyToSend = { ...newToy, likes: 0 };
 
     fetch("http://localhost:3000/toys", {
       method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-      },
+      headers: { "Content-Type": "application/json" },
       body: JSON.stringify(toyToSend),
     })
       .then((r) => r.json())
